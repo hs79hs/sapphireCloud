@@ -1,0 +1,12 @@
+prefix=
+exec_prefix=
+libdir=${pcfiledir}/../../../libavcodec
+includedir=${pcfiledir}/../../..
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 56.41.100
+Requires: libswresample >= 1.2.100, libavutil >= 54.27.100
+Conflicts:
+Libs: -L${libdir} -Wl,-rpath,${libdir} -lavcodec -lva -lva-x11 -lva -lxcb -lXau -lXdmcp -lxcb-shm -lxcb -lXau -lXdmcp -lxcb-xfixes -lxcb-render -lxcb-shape -lxcb -lXau -lXdmcp -lxcb-shape -lxcb -lXau -lXdmcp -lX11 -ljack -lasound -lSDL -lasound -lm -ldl -lpulse-simple -lpulse -lX11 -lXext -lcaca -lpthread -lx264 -lpthread -lm -ldl -lvpx -lvpx -lvpx -lvpx -lvorbisenc -lvorbis -logg -ltheoraenc -ltheoradec -logg -lopus -lm -lmp3lame -lfreetype -lz -lpng12 -lfdk-aac -lass -lfontconfig -lenca -lm -lfribidi -lexpat -lfreetype -lz -lpng12 -lcrystalhd -lm -llzma -lz -pthread
+Cflags: -I${includedir}

@@ -1,0 +1,13 @@
+=encoding utf8
+
+=head1 NAME
+
+sapphireCloud - sapphire cloud programme
+
+=head1 SYNOPSIS
+
+sapphireCloud <global_options> ...
+
+=head1 DESCRIPTION
+
+B<sapphireCloud> is the main programme of sapphireView on the cloud server.
