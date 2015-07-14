@@ -36,7 +36,8 @@ OBJS-sapphireCloud-$(CONFIG_VDA)     += ffmpeg_vda.o
 OBJS-ffserver                 += ffserver_config.o
 
 TESTTOOLS   = audiogen videogen rotozoom tiny_psnr tiny_ssim base64
-HOSTPROGS  := $(TESTTOOLS:%=tests/%) doc/print_options
+#HOSTPROGS  := $(TESTTOOLS:%=tests/%) doc/print_options
+HOSTPROGS  := doc/print_options
 TOOLS       = qt-faststart trasher uncoded_frame
 TOOLS-$(CONFIG_ZLIB) += cws2fws
 
@@ -59,13 +60,16 @@ SKIPHEADERS = cmdutils_common_opts.h compat/w32pthreads.h
 
 
 .PHONY : sapphire-Cloud
-sapphire-Cloud : cmdutils.o ffmpeg.o ffmpeg_opt.o ffmpeg_filter.o sapphireCloud.o
-	@printf "LD\tsapphireCloud\n"; g++ -Llibavcodec -Llibavdevice -Llibavfilter -Llibavformat -Llibavresample -Llibavutil -Llibpostproc -Llibswscale -Llibswresample -L/home/ubuntu/ffmpeg_build/lib  -Wl,--as-needed -Wl,-z,noexecstack -Wl,--warn-common -Wl,-rpath-link=libpostproc:libswresample:libswscale:libavfilter:libavdevice:libavformat:libavcodec:libavutil:libavresample   -o sapphireCloud cmdutils.o ffmpeg.o ffmpeg_opt.o ffmpeg_filter.o sapphireCloud.o   -lavdevice -lavfilter -lavformat -lavcodec -lpostproc -lswresample -lswscale -lavutil -lva -lva-x11 -lva -lxcb -lXau -lXdmcp -lxcb-shm -lxcb -lXau -lXdmcp -lxcb-xfixes -lxcb-render -lxcb-shape -lxcb -lXau -lXdmcp -lxcb-shape -lxcb -lXau -lXdmcp -lX11 -ljack -lasound -lSDL -lasound -lm -ldl -lpulse-simple -lpulse -lX11 -lXext -lcaca -lpthread -lx264 -lpthread -lm -ldl -lvpx -lvpx -lvpx -lvpx -lvorbisenc -lvorbis -logg -ltheoraenc -ltheoradec -logg -lopus -lm -lmp3lame -lfreetype -lz -lpng12 -lfdk-aac -lass -lfontconfig -lenca -lm -lfribidi -lexpat -lfreetype -lz -lpng12 -lcrystalhd -lm -llzma -lz -pthread
+sapphire-Cloud : cmdutils.o ffmpeg.o ffmpeg_opt.o ffmpeg_filter.o jsoncpp.o sapphireCloud.o
+	@printf "LD\tsapphireCloud\n"; g++ -Llibavcodec -Llibavdevice -Llibavfilter -Llibavformat -Llibavresample -Llibavutil -Llibpostproc -Llibswscale -Llibswresample -L/home/ubuntu/ffmpeg_build/lib  -Wl,--as-needed -Wl,-z,noexecstack -Wl,--warn-common -Wl,-rpath-link=libpostproc:libswresample:libswscale:libavfilter:libavdevice:libavformat:libavcodec:libavutil:libavresample   -o sapphireCloud cmdutils.o ffmpeg.o ffmpeg_opt.o ffmpeg_filter.o jsoncpp.o sapphireCloud.o   -lavdevice -lavfilter -lavformat -lavcodec -lpostproc -lswresample -lswscale -lavutil -lva -lva-x11 -lva -lxcb -lXau -lXdmcp -lxcb-shm -lxcb -lXau -lXdmcp -lxcb-xfixes -lxcb-render -lxcb-shape -lxcb -lXau -lXdmcp -lxcb-shape -lxcb -lXau -lXdmcp -lX11 -ljack -lasound -lSDL -lasound -lm -ldl -lpulse-simple -lpulse -lX11 -lXext -lcaca -lpthread -lx264 -lpthread -lm -ldl -lvpx -lvpx -lvpx -lvpx -lvorbisenc -lvorbis -logg -ltheoraenc -ltheoradec -logg -lopus -lm -lmp3lame -lfreetype -lz -lpng12 -lfdk-aac -lass -lfontconfig -lenca -lm -lfribidi -lexpat -lfreetype -lz -lpng12 -lcrystalhd -lm -llzma -lz -pthread
 	@printf "strip\tsapphireCloud\n"; strip sapphireCloud
 
 sapphireCloud.o : sapphireCloud.cc
 	@printf "g++\tsapphireCloud.o\n"; g++ -I. -I./ -std=c++11 -D_ISOC99_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600 -DZLIB_CONST -I/home/ubuntu/ffmpeg_build/include -fomit-frame-pointer -pthread -I/usr/include/freetype2 -I/usr/include/fribidi -I/usr/include/freetype2 -I/usr/include/opus  -D_GNU_SOURCE=1 -D_REENTRANT -I/usr/include/SDL  -g -Wall -Wdisabled-optimization -Wpointer-arith -Wredundant-decls -Wwrite-strings -Wtype-limits -Wundef -Wempty-body -Wno-parentheses -Wno-switch -Wno-format-zero-length -O3 -fno-math-errno -fno-signed-zeros -fno-tree-vectorize -Werror=format-security -Werror=implicit-function-declaration -Werror=missing-prototypes -Werror=return-type -Werror=vla -Wformat -Wno-maybe-uninitialized   -MMD -MF sapphireCloud.d -MT sapphireCloud.o -c -o sapphireCloud.o sapphireCloud.cc
 #	$(CXX) -c $(CXXFLAGS) -o sapphireCloud.o sapphireCloud.cc
+
+jsoncpp.o : JsonCpp/jsoncpp.cpp
+	@printf "g++\tjsoncpp.o\n"; g++ -c -o jsoncpp.o JsonCpp/jsoncpp.cpp
 
 
 include $(SRC_PATH)/common.mak
@@ -208,7 +212,7 @@ config:
 
 check: all alltools examples testprogs fate
 
-include $(SRC_PATH)/tests/Makefile
+#include $(SRC_PATH)/tests/Makefile
 
 $(sort $(OBJDIRS)):
 	$(Q)mkdir -p $@
