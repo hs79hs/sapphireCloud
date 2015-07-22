@@ -6,11 +6,17 @@
 //#include <vector>
 //#include <initializer_list>
 #include <cassert>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <map>
 
 using namespace std;
 
 //#define DEBUG
-#define NUM_NEW_THREADS 3
+#define NUM_NEW_THREADS 4
+
+
+map<int, string> processes_info;
 
 
 //use 'void *' as the only parameter for consistent reason with pthread_create.
@@ -26,7 +32,6 @@ static void *call_ffmpeg(void *args)
 
   pthread_detach(pthread_self());
 
-  printf("thread start, id is %lu\n", syscall(SYS_gettid));
   iCmdLen = strlen(cmdOptions);
   printf("cmd length is %d\n", iCmdLen);
 
@@ -91,13 +96,18 @@ static void create_new_process(const string &cmdOptions)
       break;
 
     case 0:
-      //in new process
+      //in new or child process
+      //the following two lines cannot be put into one line, why?
+      int tid;
+      tid = syscall(SYS_gettid);
+      printf("thread start, id is %d\n", tid);
       call_ffmpeg((void *)cmdOptions.c_str());
       exit(1);
       break;
 
     default:
-      //in original process
+      //in original or father process
+      processes_info[pid] = cmdOptions;
       break;
     }
 
@@ -116,15 +126,15 @@ static void create_new_process(const string &cmdOptions)
 
 int main(int argc, char **argv)
 {
-  const string standardCmd = "ffmpeg -i rtp://52.25.184.17:8888 -c:v libvpx -c:a libvorbis -c:s copy -r 15 -f segment -segment_list /usr/local/nginx/html/mnt/live/camera1/camera1.m3u8 -segment_list_flags +live -segment_list_type hls -segment_list_size 0 -segment_list_entry_prefix http://52.25.184.17/bath/ -segment_time 5 -segment_wrap 100 -segment_start_number 0 /usr/local/nginx/html/mnt/live/camera1/out%03d.webm";
+  const string standardCmd = "ffmpeg -i rtp://52.25.184.17:8888 -loglevel error -c:v libvpx -c:a libvorbis -c:s copy -r 15 -force_key_frames expr:gte(t,n_forced*5) -f segment -segment_list /usr/local/nginx/html/mnt/live/camera1/camera1.m3u8 -segment_list_flags +live -segment_list_type hls -segment_list_size 0 -segment_list_entry_prefix http://52.25.184.17/bath/ -segment_time 5 -segment_wrap 100 -segment_start_number 0 /usr/local/nginx/html/mnt/live/camera1/out%03d.webm";
   int inport = 5014;
-
 
   cout << __func__ << ": line " << __LINE__ << ": start to process ..." << endl;
 
   for(int i=0; i < NUM_NEW_THREADS; ++i)
     {
       string tempCmd = standardCmd;
+      //replace '8888' by specified port
       tempCmd.replace(tempCmd.find("8888"), 4, to_string(inport + i*10));
 
       if(i > 0)
@@ -132,6 +142,7 @@ int main(int argc, char **argv)
 	  auto pos = tempCmd.find("camera1");
 	  while (pos != string::npos)
 	    {
+	      //replace 'camera1' to the name of wanted camera
 	      tempCmd.replace(pos, 7, "camera" + to_string(i+1));
 	      pos = tempCmd.find("camera1", pos);
 	    }
@@ -139,12 +150,37 @@ int main(int argc, char **argv)
 
       cout << __func__ << ": line " << __LINE__ << ": the cmd is : " << tempCmd << endl;
 
+      //create new process to call ffmpeg to wait and cut the video from specified port
       create_new_process(tempCmd);
 
       sleep(1);
     }
 
   sleep(1);
+
+  while(1)
+    {
+      pid_t pid;
+      int status=0;
+
+      pid = waitpid(-1,&status,0);
+
+      if(pid>0)
+	{
+	  cout << "child " << pid << "has returned, status is " << status << endl;
+	  
+	  //re-create the process with returned pid to wait for new stream coming
+	  try {
+	    create_new_process(processes_info.at(pid));
+	  } catch (out_of_range) {
+	    cerr << "Cannot find pid info with the value " << pid << endl;
+	  }
+	  processes_info.erase(pid);
+	}
+      else{
+	cerr << "return value of waitpid is " << pid << endl;
+      }
+    }
 
   cout << __func__ << ": line " << __LINE__ << ": sapphireCloud return!" << endl;
 
